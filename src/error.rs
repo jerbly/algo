@@ -6,4 +6,6 @@ pub enum AlgoError {
     IllegalArgument,
     #[error("no blocked sites")]
     NoBlockedSites,
+    #[error("drawing error")]
+    DrawError,
 }
