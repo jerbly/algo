@@ -79,6 +79,18 @@ impl PrimeBits {
         num as usize
     }
 
+    fn extract(&self, m:usize, n: usize) -> u64 {
+        let mut result = 0u64;
+        let mut i = 0;
+        while i < n {
+            if self.is_set(m+i) {
+                result |= 1 << i;
+            }
+            i+=1;
+        }
+        result
+    }
+
     fn new() -> Self {
         let mut p = PrimeBits {primes:[0xFFFFFFFFFFFFFFFFu64; 1024]};
         p.clear(0);
@@ -102,6 +114,8 @@ fn test() {
     assert_eq!(p.is_prime(199), Some(true));
     assert_eq!(p.is_prime(198), Some(false));
     println!("{}",p.num_primes());
+    println!("{:064b} {:064b}",p.primes[0],p.primes[1]);
+    println!("{:08b}",p.extract(60, 8));
 }
 #[test]
 fn test2() {
