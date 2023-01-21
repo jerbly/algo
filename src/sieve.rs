@@ -58,6 +58,9 @@ impl PrimeBits {
         if n == 64 && bit1 == 0 {
             return self.primes[elem1 as usize];
         }
+        if bit2 == 0 {
+            return self.primes[elem1 as usize] >> (64 - n);
+        }
         if elem1 == elem2 {
             // section from a single element
             let mut result = self.primes[elem1 as usize];
@@ -113,13 +116,11 @@ mod tests {
 
     #[test]
     fn test2() {
-        let n = 67u64;
-        println!("{:08b}", n);
-        let q = n >> 6;
-        println!("{:08b}", q);
-        let r = n - (q << 6);
-        println!("{:08b}", r);
-        let r2 = n & 0x3F;
-        println!("{:08b}", r2);
+        let p = PrimeBits::new();
+        for i in 0..128 {
+            for j in 1..=64 {
+                println!("{:2},{:2} {:064b}", i, j, p.extract(i, j));
+            }
+        }
     }
 }
