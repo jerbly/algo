@@ -17,7 +17,7 @@ impl PrimeBits {
 
     fn bit_div_mod64(n: u64) -> (u64, u64) {
         let q = n >> 6;
-        let r = n - (q << 6);
+        let r = n & 0x3F;
         (q, r)
     }
 
@@ -55,6 +55,9 @@ impl PrimeBits {
     fn extract(&self, m: u64, n: u64) -> u64 {
         let (elem1, bit1) = Self::bit_div_mod64(m);
         let (elem2, bit2) = Self::bit_div_mod64(m + n);
+        if n == 64 && bit1 == 0 {
+            return self.primes[elem1 as usize];
+        }
         if elem1 == elem2 {
             // section from a single element
             let mut result = self.primes[elem1 as usize];
@@ -101,8 +104,22 @@ mod tests {
         assert_eq!(p.is_prime(198), Some(false));
         assert_eq!(p.num_primes(), 6542);
         assert_eq!(p.extract(60, 8), 0b1000_0010);
+        assert_eq!(p.extract(0, 64), p.primes[0]);
+        assert_eq!(p.extract(64, 64), p.primes[1]);
         // println!("{:064b}", p.primes[0]);
         // println!("{:064b}", p.primes[1]);
-        // println!("{:08b}", p.extract(60, 8));
+        // println!("{:064b}", p.extract(60, 64));
+    }
+
+    #[test]
+    fn test2() {
+        let n = 67u64;
+        println!("{:08b}", n);
+        let q = n >> 6;
+        println!("{:08b}", q);
+        let r = n - (q << 6);
+        println!("{:08b}", r);
+        let r2 = n & 0x3F;
+        println!("{:08b}", r2);
     }
 }
