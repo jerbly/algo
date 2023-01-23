@@ -3,8 +3,8 @@ use std::{
     fmt::{self, Display},
 };
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-struct Board {
+#[derive(Debug, Eq, PartialEq, Clone, PartialOrd, Ord)]
+pub struct Board {
     tiles: Vec<Vec<usize>>,
 }
 
@@ -24,7 +24,7 @@ impl Display for Board {
 impl Board {
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
-    fn new(tiles: Vec<Vec<usize>>) -> Self {
+    pub fn new(tiles: Vec<Vec<usize>>) -> Self {
         assert!(tiles.len() > 1);
         assert!(tiles.len() < 128);
         let mut seen: HashSet<usize> = HashSet::new();
@@ -44,7 +44,7 @@ impl Board {
     }
 
     // number of tiles out of place
-    fn hamming(&self) -> usize {
+    pub fn hamming(&self) -> usize {
         let mut i = 1;
         let max = self.tiles.len() * self.tiles.len();
         let mut ham = 0;
@@ -61,7 +61,7 @@ impl Board {
     }
 
     // sum of Manhattan distances between tiles and goal
-    fn manhattan(&self) -> usize {
+    pub fn manhattan(&self) -> usize {
         let mut i = 1;
         let max = self.tiles.len() * self.tiles.len();
         let mut man = 0;
@@ -79,8 +79,8 @@ impl Board {
     }
 
     // is this board the goal board?
-    fn is_goal() -> bool {
-        todo!();
+    pub fn is_goal(&self) -> bool {
+        self.hamming() == 0
     }
 
     fn find_zero(&self) -> (usize, usize) {
@@ -95,7 +95,7 @@ impl Board {
     }
 
     // all neighboring boards
-    fn neighbors(&self) -> std::vec::IntoIter<Board> {
+    pub fn neighbors(&self) -> std::vec::IntoIter<Board> {
         // find the 0
         let (r, c) = self.find_zero();
         let mut boards: Vec<Board> = Vec::new();
@@ -152,7 +152,7 @@ mod tests {
         let b3 = Board::new(vec![vec![1, 0, 3], vec![4, 2, 5], vec![7, 8, 6]]);
         for b in b3.neighbors() {
             println!("{b}");
-        }        
+        }
     }
 
     #[test]
