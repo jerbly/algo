@@ -125,7 +125,7 @@ impl Puzzle {
     }
 }
 
-struct Solver {
+pub struct Solver {
     puzzle: Puzzle,
     twin_puzzle: Puzzle,
 }
@@ -140,7 +140,7 @@ impl Solver {
         by swapping a pair of tiles — in lockstep (alternating back and forth between exploring search nodes in each of the two game trees).
         Exactly one of the two will lead to the goal board.
     */
-    fn new(initial: Board) -> Self {
+    pub fn new(initial: Board) -> Self {
         let twin = initial.twin();
         let mut solver = Solver {
             puzzle: Puzzle::new(initial),
@@ -160,12 +160,12 @@ impl Solver {
     }
 
     // is the initial board solvable?
-    fn is_solvable(&self) -> bool {
+    pub fn is_solvable(&self) -> bool {
         self.moves() > -1
     }
 
     // min number of moves to solve initial board; -1 if unsolvable
-    fn moves(&self) -> isize {
+    pub fn moves(&self) -> isize {
         if self.puzzle.solution.is_empty() {
             -1
         } else {
@@ -174,7 +174,7 @@ impl Solver {
     }
 
     // sequence of boards in a shortest solution; null if unsolvable
-    fn solution(&self) -> Option<&Vec<Board>> {
+    pub fn solution(&self) -> Option<&Vec<Board>> {
         if self.is_solvable() {
             Some(&self.puzzle.solution)
         } else {
