@@ -131,9 +131,39 @@ impl Board {
         boards.into_iter()
     }
 
-    // a board that is obtained by exchanging any pair of tiles
-    fn twin() -> Self {
-        todo!();
+    // a board that is obtained by exchanging any pair of tiles (zero is not a tile)
+    // used to determine whether a puzzle is solvable: exactly one of a board and its twin are solvable.
+    pub fn twin(&self) -> Self {
+        let mut twin_board = self.clone();
+        let mut from_pos = None;
+        let mut to_pos = None;
+        for (r, row) in twin_board.tiles.iter().enumerate() {
+            for (c, tile) in row.iter().enumerate() {
+                if *tile != 0 {
+                    match from_pos {
+                        Some(_) => {
+                            to_pos = Some((r, c));
+                            break;
+                        }
+                        None => from_pos = Some((r, c)),
+                    }
+                }
+            }
+            if to_pos.is_some() {
+                break;
+            }
+        }
+        //swap
+        if let Some((fr, fc)) = from_pos {
+            if let Some((tr, tc)) = to_pos {
+                let ftile = twin_board.tiles[fr][fc];
+                let ttile = twin_board.tiles[tr][tc];
+                twin_board.tiles[fr][fc] = ttile;
+                twin_board.tiles[tr][tc] = ftile;
+            }
+        }
+
+        twin_board
     }
 }
 
@@ -157,8 +187,9 @@ mod tests {
 
     #[test]
     fn test2() {
-        for a in 1..9 {
-            println!("{a} {},{}", (a - 1) / 3, (a - 1) % 3);
-        }
+        let b = Board::new(vec![vec![1, 0, 3], vec![4, 8, 2], vec![7, 6, 5]]);
+        println!("{b}");
+        let twin = b.twin();
+        println!("{twin}");
     }
 }

@@ -38,70 +38,66 @@ impl PartialOrd for Node {
     }
 }
 
-struct Solver {
+struct Puzzle {
     board_node_store: Vec<BoardNode>,
     solution: Vec<Board>,
+    heap: BinaryHeap<Node>,
 }
 
-impl Solver {
-    // find a solution to the initial board (using the A* algorithm)
+impl Puzzle {
     fn new(initial: Board) -> Self {
-        let mut solver = Solver {
+        let mut puzzle = Puzzle {
             board_node_store: vec![],
             solution: vec![],
+            heap: BinaryHeap::new(),
         };
 
         let priority = initial.manhattan();
-        solver.board_node_store.push(BoardNode {
+        puzzle.board_node_store.push(BoardNode {
             board: initial,
             parent: None,
         });
 
-        let mut heap = BinaryHeap::new();
-        heap.push(Node {
+        puzzle.heap.push(Node {
             index: 0,
             priority,
             move_num: 0,
         });
+        puzzle
+    }
 
-        let mut end_node = Node {
-            index: 0,
-            priority: 0,
-            move_num: 0,
-        };
-        while let Some(node) = heap.pop() {
-            let board_node = &solver.board_node_store[node.index];
+    fn step(&mut self) -> Option<Node> {
+        if let Some(node) = self.heap.pop() {
+            let board_node = &self.board_node_store[node.index];
             let board_node_parent = board_node.parent;
 
             if board_node.board.is_goal() {
-                end_node = node;
-                break;
+                return Some(node);
             }
             let move_num = node.move_num + 1;
             for neighbour in board_node.board.neighbors() {
                 // critical optimization: don't add a neighbour matching the parent of the search node
                 // This is essentially moving the same tile back where it came from!
-                if solver.is_parent(board_node_parent, &neighbour) {
+                if self.is_parent(board_node_parent, &neighbour) {
                     continue;
                 }
 
-                let index = solver.board_node_store.len();
+                let index = self.board_node_store.len();
                 let priority = neighbour.manhattan() + move_num;
 
-                solver.board_node_store.push(BoardNode {
+                self.board_node_store.push(BoardNode {
                     board: neighbour,
                     parent: Some(node.index),
                 });
 
-                heap.push(Node {
+                self.heap.push(Node {
                     index,
                     priority,
                     move_num,
                 });
             }
         }
-        solver.build_solution(end_node.index);
-        solver
+        None
     }
 
     fn build_solution(&mut self, end_index: usize) {
@@ -127,25 +123,60 @@ impl Solver {
             None => false,
         }
     }
+}
 
-    // is the initial board solvable? (see below)
+struct Solver {
+    puzzle: Puzzle,
+    twin_puzzle: Puzzle,
+}
+
+impl Solver {
+    // find a solution to the initial board (using the A* algorithm)
+    /*
+        Use the fact that boards are divided into two equivalence classes with respect to reachability:
+        * Those that can lead to the goal board
+        * Those that can lead to the goal board if we modify the initial board by swapping any pair of tiles (the blank square is not a tile).
+        To apply the fact, run the A* algorithm on two puzzle instances — one with the initial board and one with the initial board modified
+        by swapping a pair of tiles — in lockstep (alternating back and forth between exploring search nodes in each of the two game trees).
+        Exactly one of the two will lead to the goal board.
+    */
+    fn new(initial: Board) -> Self {
+        let twin = initial.twin();
+        let mut solver = Solver {
+            puzzle: Puzzle::new(initial),
+            twin_puzzle: Puzzle::new(twin),
+        };
+        loop {
+            if let Some(node) = solver.puzzle.step() {
+                //puzzle is solved
+                solver.puzzle.build_solution(node.index);
+                break;
+            } else if let Some(_) = solver.twin_puzzle.step() {
+                //twin solved, so initial board is unsolvable
+                break;
+            }
+        }
+        solver
+    }
+
+    // is the initial board solvable?
     fn is_solvable(&self) -> bool {
         self.moves() > -1
     }
 
     // min number of moves to solve initial board; -1 if unsolvable
     fn moves(&self) -> isize {
-        if self.solution.is_empty() {
+        if self.puzzle.solution.is_empty() {
             -1
         } else {
-            self.solution.len() as isize - 1
+            self.puzzle.solution.len() as isize - 1
         }
     }
 
     // sequence of boards in a shortest solution; null if unsolvable
     fn solution(&self) -> Option<&Vec<Board>> {
         if self.is_solvable() {
-            Some(&self.solution)
+            Some(&self.puzzle.solution)
         } else {
             None
         }
@@ -160,6 +191,18 @@ mod tests {
     fn test() {
         //        let b = Board::new(vec![vec![0, 1, 3], vec![4, 2, 5], vec![7, 8, 6]]);
         let b = Board::new(vec![vec![8, 1, 3], vec![4, 0, 2], vec![7, 6, 5]]);
+        let s = Solver::new(b);
+        println!("Minimum numnber of moves = {}\n", s.moves());
+        if let Some(boards) = s.solution() {
+            for bs in boards {
+                println!("{bs}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_unsolvable() {
+        let b = Board::new(vec![vec![8, 1, 6], vec![4, 5, 3], vec![7, 2, 0]]);
         let s = Solver::new(b);
         println!("Minimum numnber of moves = {}\n", s.moves());
         if let Some(boards) = s.solution() {
