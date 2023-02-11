@@ -1,8 +1,9 @@
 pub mod collinear_points;
+pub mod eight_puzzle;
 pub mod error;
+pub mod kdtrees;
 pub mod percolation;
 pub mod randomized_queue;
+pub mod sieve;
 pub mod union_find;
 pub mod util;
-pub mod sieve;
-pub mod eight_puzzle;
