@@ -37,7 +37,7 @@ impl RectHV {
     }
 
     // does this rectangle contain the point p (either inside or on boundary)?
-    pub fn contains(&self, p: Point2D) -> bool {
+    pub fn contains(&self, p: &Point2D) -> bool {
         (p.x() >= self.xmin) && (p.x() <= self.xmax) && (p.y() >= self.ymin) && (p.y() <= self.ymax)
     }
 
