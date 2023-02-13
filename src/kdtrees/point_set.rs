@@ -1,8 +1,10 @@
 use std::collections::BTreeSet;
 
+use itertools::Itertools;
+
 use crate::util::{point2d::Point2D, rect_hv::RectHV, std_draw::Plot};
 
-struct PointSET {
+pub struct PointSET {
     set: BTreeSet<Point2D>,
 }
 
@@ -65,5 +67,9 @@ impl PointSET {
             }
         }
         near
+    }
+
+    pub fn all(&self) -> Vec<&Point2D> {
+        self.set.iter().collect_vec()
     }
 }

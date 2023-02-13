@@ -42,7 +42,7 @@ impl RectHV {
     }
 
     // does this rectangle intersect that rectangle (at one or more points)?
-    pub fn intersects(&self, other: RectHV) -> bool {
+    pub fn intersects(&self, other: &RectHV) -> bool {
         self.xmax >= other.xmin
             && self.ymax >= other.ymin
             && other.xmax >= self.xmin

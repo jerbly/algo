@@ -60,4 +60,8 @@ impl Point2D {
         plot.point(self.x.0, self.y.0)?;
         Ok(())
     }
+    pub fn draw_match(&self, plot: &mut Plot) -> anyhow::Result<()> {
+        plot.point_match(self.x.0, self.y.0)?;
+        Ok(())
+    }
 }

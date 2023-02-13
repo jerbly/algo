@@ -57,6 +57,15 @@ impl Plot<'_> {
         Ok(())
     }
 
+    pub fn point_match(&mut self, x: f64, y: f64) -> anyhow::Result<()> {
+        let xs = self.scale_x(x);
+        let ys = self.scale_y(y);
+
+        self.backend
+            .draw(&Pixel::new((xs as i32, ys as i32), RED))?;
+        Ok(())
+    }
+
     pub fn line(&mut self, x0: f64, y0: f64, x1: f64, y1: f64) -> anyhow::Result<()> {
         let xs0 = self.scale_x(x0) as i32;
         let ys0 = self.scale_y(y0) as i32;
