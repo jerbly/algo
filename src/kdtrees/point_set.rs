@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, time::Instant};
 
 use itertools::Itertools;
 
@@ -57,6 +57,7 @@ impl PointSET {
 
     // a nearest neighbor in the set to point p; null if the set is empty
     pub fn nearest(&self, p: Point2D) -> Option<&Point2D> {
+        let start = Instant::now();
         let mut near: Option<&Point2D> = None;
         let mut dist: f64 = f64::MAX;
         for other in self.set.iter() {
@@ -66,6 +67,9 @@ impl PointSET {
                 near = Some(other);
             }
         }
+        let duration = start.elapsed();
+        println!("{:?}", duration);
+
         near
     }
 

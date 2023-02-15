@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::util::{point2d::Point2D, rect_hv::RectHV, std_draw::Plot};
 
 pub enum SplitHV {
@@ -184,16 +186,106 @@ impl KdTree {
 
     // a nearest neighbor in the set to point p; null if the set is empty
     pub fn nearest(&self, p: Point2D) -> Option<&Point2D> {
-        let mut near: Option<&Point2D> = None;
-        let mut dist: f64 = f64::MAX;
-        for other in self.all() {
-            let d = p.distance_to(other);
-            if d < dist {
-                dist = d;
-                near = Some(other);
-            }
+        /* Nearest-neighbor search. To find a closest point to a given query point,
+        start at the root and recursively search in both subtrees using the following pruning rule:
+        if the closest point discovered so far is closer than the distance between the query point and the rectangle
+        corresponding to a node, there is no need to explore that node (or its subtrees).
+        That is, search a node only only if it might contain a point that is closer than the best one found so far.
+        The effectiveness of the pruning rule depends on quickly finding a nearby point.
+        To do this, organize the recursive method so that when there are two possible subtrees to go down,
+        you always choose the subtree that is on the same side of the splitting line as the query point as the
+        first subtree to explore—the closest point found while exploring the first subtree may enable pruning of
+        the second subtree. */
+        if let Some(best_point) = &self.point {
+            let start = Instant::now();
+            let rect = RectHV::new(0.0, 0.0, 1.0, 1.0);
+            let (bp, _) = self.inner_nearest(&p, &rect, best_point, f64::MAX);
+            let duration = start.elapsed();
+            println!("{:?}", duration);
+            Some(bp)
+        } else {
+            None
         }
-        near
+    }
+
+    fn inner_nearest<'a>(
+        &'a self,
+        query_point: &Point2D,
+        rect: &RectHV,
+        best_point: &'a Point2D,
+        best_distance: f64,
+    ) -> (&Point2D, f64) {
+        if let Some(p) = &self.point {
+            let mut d = p.distance_to(query_point);
+            let mut bp = if d < best_distance {
+                p
+            } else {
+                d = best_distance;
+                best_point
+            };
+
+            let mut went_left = false;
+            let mut went_right = false;
+
+            if self.left.is_some() && self.right.is_some() {
+                // choose the subtree on the same side of the splitting line as the query point
+                let go_left = match &self.split {
+                    SplitHV::H => query_point.y() < p.y(),
+                    SplitHV::V => query_point.x() < p.x(),
+                };
+
+                if go_left {
+                    if let Some(t) = &self.left {
+                        let new_rect = match &self.split {
+                            SplitHV::H => RectHV::new(rect.xmin(), rect.ymin(), rect.xmax(), p.y()),
+                            SplitHV::V => RectHV::new(rect.xmin(), rect.ymin(), p.x(), rect.ymax()),
+                        };
+                        if new_rect.distance_to(query_point) < d {
+                            (bp, d) = t.inner_nearest(query_point, &new_rect, bp, d);
+                        }
+                    }
+                    went_left = true;
+                } else {
+                    if let Some(t) = &self.right {
+                        let new_rect = match &self.split {
+                            SplitHV::H => RectHV::new(rect.xmin(), p.y(), rect.xmax(), rect.ymax()),
+                            SplitHV::V => RectHV::new(p.x(), rect.ymin(), rect.xmax(), rect.ymax()),
+                        };
+                        if new_rect.distance_to(query_point) < d {
+                            (bp, d) = t.inner_nearest(query_point, &new_rect, bp, d);
+                        }
+                    }
+                    went_right = true;
+                }
+            }
+
+            if !went_left {
+                if let Some(t) = &self.left {
+                    let new_rect = match &self.split {
+                        SplitHV::H => RectHV::new(rect.xmin(), rect.ymin(), rect.xmax(), p.y()),
+                        SplitHV::V => RectHV::new(rect.xmin(), rect.ymin(), p.x(), rect.ymax()),
+                    };
+                    if new_rect.distance_to(query_point) < d {
+                        (bp, d) = t.inner_nearest(query_point, &new_rect, bp, d);
+                    }
+                }
+            }
+
+            if !went_right {
+                if let Some(t) = &self.right {
+                    let new_rect = match &self.split {
+                        SplitHV::H => RectHV::new(rect.xmin(), p.y(), rect.xmax(), rect.ymax()),
+                        SplitHV::V => RectHV::new(p.x(), rect.ymin(), rect.xmax(), rect.ymax()),
+                    };
+                    if new_rect.distance_to(query_point) < d {
+                        (bp, d) = t.inner_nearest(query_point, &new_rect, bp, d);
+                    }
+                }
+            }
+            (bp, d)
+        } else {
+            (best_point, best_distance)
+        }
     }
 
     pub fn all(&self) -> Vec<&Point2D> {
