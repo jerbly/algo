@@ -50,12 +50,12 @@ impl RectHV {
     }
 
     // Euclidean distance from point p to closest point in rectangle
-    pub fn distance_to(&self, p: Point2D) -> f64 {
+    pub fn distance_to(&self, p: &Point2D) -> f64 {
         self.distance_squared_to(p).sqrt()
     }
 
     // square of Euclidean distance from point p to closest point in rectangle
-    pub fn distance_squared_to(&self, p: Point2D) -> f64 {
+    pub fn distance_squared_to(&self, p: &Point2D) -> f64 {
         let mut dx = 0.0;
         let mut dy = 0.0;
         if p.x() < self.xmin {

@@ -1,3 +1,4 @@
+pub mod circular;
 pub mod collinear_points;
 pub mod eight_puzzle;
 pub mod error;
